@@ -1,0 +1,31 @@
+# ======================
+# Dados / Data Lake
+# ======================
+data/
+
+# Parquet / CSV grandes
+*.parquet
+*.csv
+
+# Downloads temporários
+*.zip
+
+# ======================
+# Spark / logs
+# ======================
+spark-warehouse/
+*.log
+
+# ======================
+# Python
+# ======================
+__pycache__/
+*.pyc
+.env
+.venv/
+venv/
+
+# ======================
+# Sistema
+# ======================
+.DS_Store
