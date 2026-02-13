@@ -1,0 +1,6 @@
+pyspark
+delta-spark
+requests
+pandas
+pytest
+prefect
