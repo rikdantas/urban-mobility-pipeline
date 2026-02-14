@@ -178,7 +178,7 @@ conda activate urban-pipeline
 
 ---
 
-### 2️⃣ Instalar dependências adicionais (se necessário)
+### 2️⃣ Instalar dependências adicionais
 
 ```bash
 pip install -r requirements.txt

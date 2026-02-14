@@ -59,8 +59,6 @@ numpy==2.4.2
 oauthlib==3.3.1
 opentelemetry-api==1.39.1
 orjson==3.11.7
-packaging @ file:///home/task_176104885106445/conda-bld/packaging_1761049078006/work
-pandas==3.0.0
 pathspec==1.0.4
 pendulum==3.2.0
 pluggy==1.6.0
