@@ -11,31 +11,40 @@ DELTA_JAR = "io.delta:delta-spark_2.12:3.2.0"
 
 
 def build_spark() -> SparkSession:
+    """Create and configure Spark session with Delta Lake support."""
     return (
         SparkSession.builder
         .appName("silver-mco")
         .config("spark.driver.memory", "4g")
         .config("spark.jars.packages", DELTA_JAR)
-        .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-        .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+        .config(
+            "spark.sql.extensions",
+            "io.delta.sql.DeltaSparkSessionExtension"
+        )
+        .config(
+            "spark.sql.catalog.spark_catalog",
+            "org.apache.spark.sql.delta.catalog.DeltaCatalog"
+        )
         .getOrCreate()
     )
 
 
 def reset_output_dir(path: str) -> None:
+    """Remove directory if it exists."""
     if os.path.exists(path):
         shutil.rmtree(path)
 
 
 def list_mco_partitions(base_dir: str) -> list[str]:
+    """List all mco_* subdirectories in the base directory."""
     if not os.path.exists(base_dir):
         raise FileNotFoundError(f"Diretório não encontrado: {base_dir}")
 
     paths = []
     for name in sorted(os.listdir(base_dir)):
-        full = os.path.join(base_dir, name)
-        if os.path.isdir(full) and name.lower().startswith("mco_"):
-            paths.append(full)
+        full_path = os.path.join(base_dir, name)
+        if os.path.isdir(full_path) and name.lower().startswith("mco_"):
+            paths.append(full_path)
 
     if not paths:
         raise RuntimeError(f"Nenhuma subpasta mco_* encontrada em: {base_dir}")
@@ -44,22 +53,22 @@ def list_mco_partitions(base_dir: str) -> list[str]:
 
 
 def main() -> None:
+    """Main ETL function to transform bronze MCO data to silver layer."""
     spark = build_spark()
     spark.sparkContext.setLogLevel("WARN")
 
+    # Read all monthly partitions
     mco_paths = list_mco_partitions(BRONZE_BASE)
-
-    # Lê todos os meses (cada pasta contém parquet)
     df = spark.read.parquet(*mco_paths)
 
     # =========================================================
-    # Remove colunas inválidas para Delta (ex.: "", " ", "   ")
+    # Remove columns with invalid names for Delta (ex.: "", " ")
     # =========================================================
-    invalid_cols = [c for c in df.columns if c.strip() == ""]
+    invalid_cols = [col_name for col_name in df.columns if col_name.strip() == ""]
     if invalid_cols:
         df = df.drop(*invalid_cols)
 
-    # Padroniza nomes (no bronze aparecem com espaço à esquerda)
+    # Standardize column names (remove leading spaces)
     rename_map = {
         " VIAGEM": "viagem",
         " LINHA": "linha",
@@ -83,12 +92,12 @@ def main() -> None:
         " EMPRESA OPERADORA": "empresa_operadora",
     }
 
-    for old, new in rename_map.items():
-        if old in df.columns:
-            df = df.withColumnRenamed(old, new)
+    for old_name, new_name in rename_map.items():
+        if old_name in df.columns:
+            df = df.withColumnRenamed(old_name, new_name)
 
-    # Tipagem numérica
-    int_cols = [
+    # Cast numeric columns to integer type
+    integer_columns = [
         "catraca_saida",
         "catraca_chegada",
         "total_usuarios",
@@ -100,23 +109,28 @@ def main() -> None:
         "sublinha",
         "veiculo",
     ]
-    for c in int_cols:
-        if c in df.columns:
-            df = df.withColumn(c, col(c).cast(IntegerType()))
+    for column in integer_columns:
+        if column in df.columns:
+            df = df.withColumn(column, col(column).cast(IntegerType()))
 
-    # Datas/horários
+    # Parse timestamp columns
     if "viagem" in df.columns:
-        df = df.withColumn("viagem", to_timestamp(col("viagem"), "dd/MM/yyyy"))
+        df = df.withColumn(
+            "viagem",
+            to_timestamp(col("viagem"), "dd/MM/yyyy")
+        )
 
     if "data_fechamento" in df.columns:
-        df = df.withColumn("data_fechamento", to_timestamp(col("data_fechamento"), "dd/MM/yyyy HH:mm"))
+        df = df.withColumn(
+            "data_fechamento",
+            to_timestamp(col("data_fechamento"), "dd/MM/yyyy HH:mm")
+        )
 
-    # Persistência Silver (Delta)
+    # Write silver data in Delta format
     reset_output_dir(SILVER_PATH)
     df.write.mode("overwrite").format("delta").save(SILVER_PATH)
 
     print("Silver MCO concluída com sucesso.")
-
     spark.stop()
 
 
