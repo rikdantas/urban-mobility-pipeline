@@ -2,6 +2,8 @@
 # Dados / Data Lake
 # ======================
 data/
+tmp/
+*.html
 
 # Parquet / CSV grandes
 *.parquet
