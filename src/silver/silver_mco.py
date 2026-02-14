@@ -117,21 +117,6 @@ def main() -> None:
 
     print("Silver MCO concluída com sucesso.")
 
-    # =========================================================
-    # 🔎 BLOCO DE VALIDAÇÃO (REMOVER ANTES DO COMMIT)
-    # =========================================================
-    df_check = spark.read.format("delta").load(SILVER_PATH)
-    
-    print("\n📊 AMOSTRA:")
-    df_check.show(5, truncate=False)
-    
-    print("\n📐 SCHEMA:")
-    df_check.printSchema()
-    
-    print("\n📈 TOTAL DE REGISTROS:")
-    print(df_check.count())
-    # =========================================================
-
     spark.stop()
 
 
