@@ -191,7 +191,7 @@ pip install -r requirements.txt
 ### 3️⃣ Executar o pipeline completo
 
 ```bash
-python run_pipeline.py
+python src/orchestration/run_pipeline.py
 ```
 
 Este comando executa automaticamente:
@@ -212,7 +212,7 @@ cd urban-mobility-pipeline
 conda env create -f environment.yml
 conda activate urban-pipeline
 pip install -r requirements.txt
-python run_pipeline.py
+python src/orchestration/run_pipeline.py
 ```
 
 ---
@@ -241,6 +241,18 @@ CKAN APIs / CSV
         ↓
      BI / ML
 ```
+
+---
+
+## 📊 Visualização
+
+O heatmap de densidade dos ônibus (camada Gold) pode ser gerado executando:
+
+```
+python src/utils/visualiza_heatmap.py
+```
+
+Após a execução, será gerado um arquivo .html contendo o mapa interativo pronto para visualização em navegador.
 
 ---
 
